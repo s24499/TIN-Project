@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Mój Garaż - Strona główna</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Mój Garaż</h1>
+      <nav id="main-nav">
+        <a href="index.html">Strona główna</a>
+        <a href="login.html" class="btn" id="login-link">Zaloguj / Zarejestruj</a>
+        <!-- Link Zarządzanie garażem będzie dodany dynamicznie dla OWNER -->
+      </nav>
+      <p id="user-info" class="user-info"></p>
+    </header>
+
+    <section>
+      <p>Prywatna kolekcja samochodów, z prostym zarządzaniem autami i serwisami.</p>
+
+      <h2>Publiczne auta</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Marka</th>
+            <th>Model</th>
+            <th>Rok</th>
+            <th>Właściciel</th>
+          </tr>
+        </thead>
+        <tbody id="public-cars-body"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:3000';
+
+    async function loadPublicCars() {
+      try {
+        const res = await fetch(API + '/public/cars');
+        const data = await res.json();
+        const tbody = document.getElementById('public-cars-body');
+        tbody.innerHTML = '';
+        data.forEach(car => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${car.brand}</td>
+            <td>${car.model}</td>
+            <td>${car.year}</td>
+            <td>${car.owner_login}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadMe() {
+      try {
+        const res = await fetch(API + '/auth/me', { credentials: 'include' });
+        const me = await res.json();
+        const userInfo = document.getElementById('user-info');
+        const nav = document.getElementById('main-nav');
+        const loginLink = document.getElementById('login-link');
+
+        if (!me) {
+          userInfo.textContent = 'Nie zalogowano';
+          loginLink.style.display = 'inline-block';
+          loginLink.textContent = 'Zaloguj / Zarejestruj';
+          return;
+        }
+
+        userInfo.textContent = 'Zalogowano jako: ' + me.login + ' (' + me.role + ')';
+        loginLink.textContent = 'Konto / wyloguj';
+
+        if (me.role === 'OWNER') {
+          const manageLink = document.createElement('a');
+          manageLink.href = 'garage.html';
+          manageLink.textContent = 'Zarządzanie garażem';
+          nav.appendChild(manageLink);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadMe();
+    loadPublicCars();
+  </script>
+</body>
+</html>

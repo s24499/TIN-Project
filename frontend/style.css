@@ -1,0 +1,230 @@
+/* ================================
+   Zmienne kolorów i podstawowe wartości
+   ================================ */
+:root {
+  --primary: #007bff;
+  --primary-dark: #0056b3;
+  --bg: #f5f5f5;
+  --text: #212529;
+  --border-radius: 4px;
+  --spacing: 8px;
+}
+
+/* Reset pudełkowy – ułatwia kontrolę nad rozmiarami */
+* {
+  box-sizing: border-box;
+}
+
+/* ================================
+   Body, typografia, tło
+   ================================ */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+h1, h2, h3 {
+  margin-top: 0;
+}
+
+/* Linki – niebieskie, bez podkreślenia, z podkreśleniem przy hover */
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ================================
+   Główne pudełko strony (.page)
+   ================================ */
+.page {
+  max-width: 1100px; /* szerokość aplikacji */
+  margin: 32px auto;
+  padding: 24px 28px 32px;
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Każda sekcja ma odstęp od kolejnej */
+section {
+  margin-bottom: 24px;
+}
+
+/* ================================
+   Nagłówek i nawigacja
+   ================================ */
+header {
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+header nav a,
+header nav .btn {
+  margin-right: 12px;
+}
+
+/* Pasek z informacją o zalogowanym użytkowniku */
+.user-info {
+  padding: 4px 8px;
+  background-color: #e9f3ff;
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  display: inline-block;
+}
+
+/* Komunikaty błędów / info */
+.msg {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #dc3545;
+}
+
+/* ================================
+   Layout kolumnowy (garage.html)
+   ================================ */
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px; /* odstęp między kolumnami */
+}
+
+.column {
+  flex: 1 1 480px; /* minimalna szerokość + możliwość zawijania */
+}
+
+/* ================================
+   Tabele
+   ================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #dee2e6;
+  padding: 8px 10px; /* nieco większy padding dla „powietrza” */
+  text-align: left;
+}
+
+th {
+  background-color: #e9f3ff;
+}
+
+tr:nth-child(even) td {
+  background-color: #f8f9fa;
+}
+
+/* ================================
+   Przyciski
+   ================================ */
+
+/* Podstawowy przycisk */
+button,
+input[type="submit"],
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--primary);
+  background-color: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover,
+input[type="submit"]:hover,
+.btn:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+}
+
+/* Wariant „secondary” – szary, np. dla akcji pomocniczych */
+button.secondary,
+.btn.secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+button.secondary:hover,
+.btn.secondary:hover {
+  background-color: #5a6268;
+  border-color: #5a6268;
+}
+
+/* Małe przyciski (np. w tabeli Akcje) */
+.btn-small {
+  padding: 3px 8px;
+  font-size: 12px;
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+
+/* ================================
+   Formularze i pola
+   ================================ */
+form {
+  margin: 16px 0 20px;
+  padding: 12px 14px;
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius);
+  border: 1px solid #dee2e6;
+}
+
+/* Etykieta z polem wejściowym pod spodem */
+label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+/* Pola tekstowe, liczby, daty i select */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+select {
+  width: 100%;
+  max-width: 280px;
+  padding: 6px 8px;
+  margin-top: 3px;
+  margin-bottom: 8px;
+  border-radius: var(--border-radius);
+  border: 1px solid #ced4da;
+  font-size: 14px;
+}
+
+/* Kontener na przyciski formularza */
+.form-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+/* ================================
+   Paginacja
+   ================================ */
+.pagination {
+  margin-top: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ================================
+   Drobne poprawki nagłówków niższego rzędu
+   ================================ */
+h3 {
+  margin-top: 18px;
+  margin-bottom: 8px;
+}

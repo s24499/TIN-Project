@@ -1,0 +1,40 @@
+DROP DATABASE IF EXISTS garage;
+CREATE DATABASE garage CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE garage;
+
+-- Wymuszenie UTF-8 na połączeniu
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  login VARCHAR(100) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  first_name VARCHAR(100) NOT NULL,
+  last_name VARCHAR(100) NOT NULL,
+  role ENUM('OWNER','GUEST') NOT NULL DEFAULT 'OWNER',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE cars (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  brand VARCHAR(100) NOT NULL,
+  model VARCHAR(100) NOT NULL,
+  year INT NOT NULL,
+  power_hp INT,
+  value DECIMAL(10,2),
+  notes TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE services (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  car_id INT NOT NULL,
+  user_id INT NOT NULL,
+  date DATE NOT NULL,
+  type ENUM('SERVICE','MOD','DRIVE','FUEL') NOT NULL,
+  description TEXT,
+  cost DECIMAL(10,2),
+  FOREIGN KEY (car_id) REFERENCES cars(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

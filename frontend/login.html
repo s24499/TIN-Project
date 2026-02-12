@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Mój Garaż - Logowanie</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Mój Garaż</h1>
+      <nav>
+        <a href="index.html">Strona główna</a>
+        <button type="button" id="logout-btn" class="btn secondary">Wyloguj</button>
+      </nav>
+    </header>
+
+    <div class="columns">
+      <section class="column">
+        <h2>Logowanie</h2>
+        <form id="login-form">
+          <label>
+            Login
+            <input type="text" name="login" required>
+          </label>
+          <label>
+            Hasło
+            <input type="password" name="password" required>
+          </label>
+          <button type="submit" class="btn">Zaloguj</button>
+        </form>
+      </section>
+
+      <section class="column">
+        <h2>Rejestracja</h2>
+        <form id="register-form">
+          <label>
+            Login
+            <input type="text" name="login" required>
+          </label>
+          <label>
+            Hasło
+            <input type="password" name="password" required>
+          </label>
+          <label>
+            Imię
+            <input type="text" name="first_name" required>
+          </label>
+          <label>
+            Nazwisko
+            <input type="text" name="last_name" required>
+          </label>
+          <label>
+            Rola
+            <select name="role">
+              <option value="OWNER">OWNER</option>
+              <option value="GUEST">GUEST</option>
+            </select>
+          </label>
+          <button type="submit" class="btn">Zarejestruj</button>
+        </form>
+      </section>
+    </div>
+
+    <p id="msg" class="msg"></p>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:3000';
+
+    async function apiPost(path, data) {
+      const res = await fetch(API + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Błąd');
+      }
+      return res.json();
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        login: form.login.value,
+        password: form.password.value
+      };
+      try {
+        await apiPost('/auth/login', data);
+        // po zalogowaniu wracamy na stronę główną
+        window.location.href = 'index.html';
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        login: form.login.value,
+        password: form.password.value,
+        first_name: form.first_name.value,
+        last_name: form.last_name.value,
+        role: form.role.value
+      };
+      try {
+        await apiPost('/auth/register', data);
+        // po rejestracji także wracamy na stronę główną
+        window.location.href = 'index.html';
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+
+    // Wylogowanie z poziomu strony logowania (czyści sesję, wraca na index)
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      try {
+        await apiPost('/auth/logout', {});
+        window.location.href = 'index.html';
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

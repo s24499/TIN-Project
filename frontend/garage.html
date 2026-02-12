@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Mój Garaż - Panel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Mój Garaż</h1>
+      <nav>
+        <a href="index.html">Strona główna</a>
+        <button id="logout-btn" class="btn">Wyloguj</button>
+      </nav>
+      <p id="user-info" class="user-info"></p>
+      <p id="msg" class="msg"></p>
+    </header>
+
+    <div class="columns">
+      <section class="column">
+        <h2>Moje auta</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Marka</th>
+              <th>Model</th>
+              <th>Rok</th>
+              <th>Moc</th>
+              <th>Wartość</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody id="cars-body"></tbody>
+        </table>
+        <div class="pagination">
+          Strona: <span id="page-info"></span>
+          <button id="prev-page" class="btn secondary">Prev</button>
+          <button id="next-page" class="btn secondary">Next</button>
+        </div>
+
+        <h3>Dodaj / edytuj auto</h3>
+        <form id="car-form">
+          <input type="hidden" name="id">
+          <label>
+            Marka
+            <input type="text" name="brand" required>
+          </label>
+          <label>
+            Model
+            <input type="text" name="model" required>
+          </label>
+          <label>
+            Rok
+            <input type="number" name="year" required>
+          </label>
+          <label>
+            Moc (KM)
+            <input type="number" name="power_hp">
+          </label>
+          <label>
+            Wartość
+            <input type="number" step="0.01" name="value">
+          </label>
+          <label>
+            Notatki
+            <input type="text" name="notes">
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn">Zapisz</button>
+            <button type="button" id="car-form-reset" class="btn secondary">Nowe</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="column">
+        <h2>Serwisy wybranego auta</h2>
+        <p>Wybrane auto ID: <span id="selected-car-id">brak</span></p>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Data</th>
+              <th>Typ</th>
+              <th>Opis</th>
+              <th>Koszt</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody id="services-body"></tbody>
+        </table>
+
+        <h3>Dodaj / edytuj serwis</h3>
+        <form id="service-form">
+          <input type="hidden" name="id">
+          <label>
+            Data
+            <input type="date" name="date" required>
+          </label>
+          <label>
+            Typ
+            <select name="type" required>
+              <option value="SERVICE">SERVICE</option>
+              <option value="MOD">MOD</option>
+              <option value="DRIVE">DRIVE</option>
+              <option value="FUEL">FUEL</option>
+            </select>
+          </label>
+          <label>
+            Opis
+            <input type="text" name="description">
+          </label>
+          <label>
+            Koszt
+            <input type="number" step="0.01" name="cost">
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn">Zapisz</button>
+            <button type="button" id="service-form-reset" class="btn secondary">Nowe</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:3000';
+
+    async function apiGet(path) {
+      const res = await fetch(API + path, { credentials: 'include' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Błąd');
+      }
+      return res.json();
+    }
+
+    async function apiPost(path, data) {
+      const res = await fetch(API + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Błąd');
+      }
+      return res.json();
+    }
+
+    async function apiPut(path, data) {
+      const res = await fetch(API + path, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Błąd');
+      }
+      return res.json();
+    }
+
+    async function apiDelete(path) {
+      const res = await fetch(API + path, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Błąd');
+      }
+      return res.json();
+    }
+
+    let currentPage = 1;
+    let currentLimit = 5;
+    let currentTotal = 0;
+    let selectedCarId = null;
+
+    async function loadMe() {
+      const me = await apiGet('/auth/me').catch(() => null);
+      if (!me) {
+        window.location.href = 'login.html';
+        return;
+      }
+      document.getElementById('user-info').textContent =
+        'Zalogowano jako: ' + me.login + ' (' + me.role + ')';
+    }
+
+    async function loadCars(page = 1) {
+      currentPage = page;
+      const res = await apiGet('/cars?page=' + page + '&limit=' + currentLimit);
+      currentTotal = res.total;
+      const tbody = document.getElementById('cars-body');
+      tbody.innerHTML = '';
+      res.data.forEach(car => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${car.id}</td>
+          <td>${car.brand}</td>
+          <td>${car.model}</td>
+          <td>${car.year}</td>
+          <td>${car.power_hp || ''}</td>
+          <td>${car.value || ''}</td>
+          <td>
+            <button data-action="select" data-id="${car.id}" class="btn secondary btn-small">Serwisy</button>
+            <button data-action="edit" data-id="${car.id}" class="btn secondary btn-small">Edytuj</button>
+            <button data-action="delete" data-id="${car.id}" class="btn secondary btn-small">Usuń</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      const maxPage = Math.max(1, Math.ceil(currentTotal / currentLimit));
+      document.getElementById('page-info').textContent = currentPage + ' / ' + maxPage;
+    }
+
+    async function loadServices(carId) {
+      if (!carId) return;
+      const data = await apiGet('/cars/' + carId + '/services');
+      const tbody = document.getElementById('services-body');
+      tbody.innerHTML = '';
+      data.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.date}</td>
+          <td>${s.type}</td>
+          <td>${s.description || ''}</td>
+          <td>${s.cost || ''}</td>
+          <td>
+            <button data-action="edit-service" data-id="${s.id}" class="btn secondary btn-small">Edytuj</button>
+            <button data-action="delete-service" data-id="${s.id}" class="btn secondary btn-small">Usuń</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('cars-body').addEventListener('click', async (e) => {
+      if (e.target.tagName !== 'BUTTON') return;
+      const id = e.target.getAttribute('data-id');
+      const action = e.target.getAttribute('data-action');
+      try {
+        if (action === 'select') {
+          selectedCarId = id;
+          document.getElementById('selected-car-id').textContent = id;
+          await loadServices(id);
+        } else if (action === 'edit') {
+          const car = await apiGet('/cars/' + id);
+          const form = document.getElementById('car-form');
+          form.id.value = car.id;
+          form.brand.value = car.brand;
+          form.model.value = car.model;
+          form.year.value = car.year;
+          form.power_hp.value = car.power_hp || '';
+          form.value.value = car.value || '';
+          form.notes.value = car.notes || '';
+        } else if (action === 'delete') {
+          if (confirm('Na pewno usunąć auto?')) {
+            await apiDelete('/cars/' + id);
+            await loadCars(currentPage);
+          }
+        }
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+
+    document.getElementById('car-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        brand: form.brand.value,
+        model: form.model.value,
+        year: form.year.value,
+        power_hp: form.power_hp.value,
+        value: form.value.value,
+        notes: form.notes.value
+      };
+      try {
+        if (form.id.value) {
+          await apiPut('/cars/' + form.id.value, payload);
+        } else {
+          await apiPost('/cars', payload);
+        }
+        form.reset();
+        form.id.value = '';
+        await loadCars(currentPage);
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+
+    document.getElementById('car-form-reset').addEventListener('click', () => {
+      const form = document.getElementById('car-form');
+      form.reset();
+      form.id.value = '';
+    });
+
+    document.getElementById('services-body').addEventListener('click', async (e) => {
+      if (e.target.tagName !== 'BUTTON') return;
+      const id = e.target.getAttribute('data-id');
+      const action = e.target.getAttribute('data-action');
+      try {
+        if (action === 'edit-service') {
+          const s = await apiGet('/services/' + id);
+          const form = document.getElementById('service-form');
+          form.id.value = s.id;
+          form.date.value = s.date;
+          form.type.value = s.type;
+          form.description.value = s.description || '';
+          form.cost.value = s.cost || '';
+        } else if (action === 'delete-service') {
+          if (confirm('Na pewno usunąć wpis serwisowy?')) {
+            await apiDelete('/services/' + id);
+            if (selectedCarId) {
+              await loadServices(selectedCarId);
+            }
+          }
+        }
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+
+    document.getElementById('service-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedCarId) {
+        document.getElementById('msg').textContent = 'Najpierw wybierz auto.';
+        return;
+      }
+      const form = e.target;
+      const payload = {
+        date: form.date.value,
+        type: form.type.value,
+        description: form.description.value,
+        cost: form.cost.value
+      };
+      try {
+        if (form.id.value) {
+          await apiPut('/services/' + form.id.value, payload);
+        } else {
+          await apiPost('/cars/' + selectedCarId + '/services', payload);
+        }
+        form.reset();
+        form.id.value = '';
+        await loadServices(selectedCarId);
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    });
+
+    document.getElementById('service-form-reset').addEventListener('click', () => {
+      const form = document.getElementById('service-form');
+      form.reset();
+      form.id.value = '';
+    });
+
+    document.getElementById('prev-page').addEventListener('click', async () => {
+      if (currentPage > 1) {
+        await loadCars(currentPage - 1);
+      }
+    });
+
+    document.getElementById('next-page').addEventListener('click', async () => {
+      const maxPage = Math.max(1, Math.ceil(currentTotal / currentLimit));
+      if (currentPage < maxPage) {
+        await loadCars(currentPage + 1);
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      await apiPost('/auth/logout', {});
+      window.location.href = 'index.html';
+    });
+
+    (async function init() {
+      try {
+        await loadMe();
+        await loadCars(1);
+      } catch (err) {
+        document.getElementById('msg').textContent = err.message;
+      }
+    })();
+  </script>
+</body>
+</html>
