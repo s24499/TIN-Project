@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
+const path = require('path');
 
 const app = express();
 
@@ -17,12 +18,14 @@ const pool = mysql.createPool({
 });
 
 app.use(cors({
-  origin: 'http://127.0.0.1:3001', // dokładny adres frontu
+  origin: 'http://localhost:3000',
   credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'supersekret',
@@ -338,7 +341,12 @@ app.get('/public/cars', async (req, res) => {
   }
 });
 
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: err.message });
+});
+
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => {
   console.log(`Garage backend listening on http://localhost:${port}`);
-});
+})
