@@ -341,11 +341,6 @@ app.get('/public/cars', async (req, res) => {
   }
 });
 
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ error: err.message });
-});
-
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => {
   console.log(`Garage backend listening on http://localhost:${port}`);
